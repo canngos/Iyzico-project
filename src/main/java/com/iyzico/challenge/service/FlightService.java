@@ -1,5 +1,6 @@
 package com.iyzico.challenge.service;
 
+import com.iyzico.challenge.request.ClientRequest;
 import com.iyzico.challenge.request.FlightRequest;
 import com.iyzico.challenge.request.SeatRequest;
 import com.iyzico.challenge.response.*;
@@ -21,4 +22,6 @@ public interface FlightService {
     DetailFlightResponse getAllFlights();
 
     DefaultMessageResponse bookSeat(Long flightId, Long seatId);
+
+    DefaultMessageResponse bookSeatWithIyzico(Long flightId, Long seatId, ClientRequest clientRequest);
 }

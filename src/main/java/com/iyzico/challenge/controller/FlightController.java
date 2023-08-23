@@ -1,5 +1,6 @@
 package com.iyzico.challenge.controller;
 
+import com.iyzico.challenge.request.ClientRequest;
 import com.iyzico.challenge.request.FlightRequest;
 import com.iyzico.challenge.request.SeatRequest;
 import com.iyzico.challenge.response.DefaultMessageResponse;
@@ -59,5 +60,10 @@ public class FlightController {
     @PostMapping(value = "/{flightId}/book/{seatId}")
     public ResponseEntity<DefaultMessageResponse> bookSeat(@Valid @PathVariable Long flightId, @Valid @PathVariable Long seatId) {
         return new ResponseEntity<>(flightService.bookSeat(flightId, seatId), HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/{flightId}/book/{seatId}/iyzico")
+    public ResponseEntity<DefaultMessageResponse> bookSeatWithIyzico(@Valid @PathVariable Long flightId, @Valid @PathVariable Long seatId, @Valid @RequestBody ClientRequest clientRequest) {
+        return new ResponseEntity<>(flightService.bookSeatWithIyzico(flightId, seatId, clientRequest), HttpStatus.OK);
     }
 }

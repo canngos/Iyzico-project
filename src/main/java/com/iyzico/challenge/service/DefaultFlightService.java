@@ -11,6 +11,7 @@ import com.iyzico.challenge.exception.TransactionCode;
 import com.iyzico.challenge.repository.BookedSeatRepository;
 import com.iyzico.challenge.repository.FlightRepository;
 import com.iyzico.challenge.repository.SeatRepository;
+import com.iyzico.challenge.request.ClientRequest;
 import com.iyzico.challenge.request.FlightRequest;
 import com.iyzico.challenge.request.SeatRequest;
 import com.iyzico.challenge.response.*;
@@ -37,6 +38,7 @@ public class DefaultFlightService implements FlightService {
     private final SeatRepository seatRepository;
     private final PaymentServiceClients paymentServiceClients;
     private final BookedSeatRepository bookedSeatRepository;
+    private final RealPaymentService realPaymentService;
 
     @Override
     public FlightResponse createFlight(FlightRequest flightRequest) {
@@ -195,6 +197,36 @@ public class DefaultFlightService implements FlightService {
             throw new BusinessException(TransactionCode.ALREADY_BOOKED);
         }
 
+    }
+
+    @Override
+    public DefaultMessageResponse bookSeatWithIyzico(Long flightId, Long seatId, ClientRequest clientRequest) {
+        Flight flight = flightRepository.findById(flightId).orElseThrow(() -> new BusinessException(TransactionCode.FLIGHT_NOT_FOUND));
+        Seat seat = seatRepository.findBySeatIdAndFlight(seatId, flight).orElseThrow(() -> new BusinessException(TransactionCode.SEAT_NOT_FOUND));
+        try {
+            if (Boolean.TRUE.equals(seat.getIsReserved())) {
+                log.error("Seat " + seatId + " already booked for flight " + flightId);
+                throw new BusinessException(TransactionCode.ALREADY_BOOKED);
+            }
+            String paymentStatus = realPaymentService.pay(flight.getPrice(), clientRequest);
+            BookedSeat bookedSeat = new BookedSeat();
+            bookedSeat.setSeat(seat);
+            bookedSeat.setFlight(flight);
+            bookedSeatRepository.save(bookedSeat);
+            seat.setIsReserved(true);
+            seatRepository.save(seat);
+
+            DefaultMessageResponse defaultMessageResponse = new DefaultMessageResponse();
+            DefaultMessageBody body = new DefaultMessageBody("Iyzico payment service status: " + paymentStatus);
+            defaultMessageResponse.setBody(new BaseBody<>(body));
+            defaultMessageResponse.setStatus(new Status(TransactionCode.SUCCESS));
+            log.info("Seat " + seat.getSeatName() + " booked successfully for flight id " + flight.getFlightId());
+            return defaultMessageResponse;
+        }
+        catch(DataIntegrityViolationException e){
+            log.error("Seat " + seatId + " already booked for flight " + flightId);
+            throw new BusinessException(TransactionCode.ALREADY_BOOKED);
+        }
     }
 
     private void mapFlight(FlightRequest flightRequest, Flight flight) {
