@@ -1,10 +1,4 @@
-# iyzico coding challenge
-
-Thank you for applying to work in Iyzico Engineering.
-
-As part of our interview process, we expect you to complete a coding challenge in order for us to understand your coding skills. 
-The challenge is a Java11 + Spring Boot project which uses H2 as the database.
-
+# Personal coding challenge
 
 # Question 1: Flight Booking System
 
